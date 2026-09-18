@@ -10,7 +10,7 @@ from .camera import Camera
 from .scene import GaussianScene
 
 
-def make_street():
+def make_street(device=None):
     means, scales, colors = [], [], []
 
     def add(p, s, c):
@@ -61,12 +61,14 @@ def make_street():
             add(p.tolist(), [.20,.20,.20], [0.12, float(rng.uniform(.38,.61)),.20])
     n = len(means)
     quaternions = torch.zeros(n,4); quaternions[:,0] = 1
-    return GaussianScene(torch.tensor(means, dtype=torch.float32),
-                         torch.tensor(scales, dtype=torch.float32), quaternions,
-                         torch.tensor(colors, dtype=torch.float32), torch.full((n,),.84))
+    # Built on the CPU and then moved: identical bits on every backend.
+    scene = GaussianScene(torch.tensor(means, dtype=torch.float32),
+                          torch.tensor(scales, dtype=torch.float32), quaternions,
+                          torch.tensor(colors, dtype=torch.float32), torch.full((n,),.84))
+    return scene.to(device) if device is not None else scene
 
 
-def street_camera(angle_degrees, size=48):
+def street_camera(angle_degrees, size=48, device=None):
     angle = math.radians(angle_degrees)
     center = torch.tensor([4.6*math.sin(angle), 3.1, 4.6*math.cos(angle)])
     forward = torch.nn.functional.normalize(torch.tensor([0.,.35,0.])-center, dim=0)
@@ -74,4 +76,4 @@ def street_camera(angle_degrees, size=48):
     down = torch.linalg.cross(forward, right)
     R = torch.stack((right, down, forward))
     K = torch.tensor([[size*1.0,0.,(size-1)/2],[0.,size*1.0,(size-1)/2],[0.,0.,1.]])
-    return Camera(R,-R@center,K,size,size)
+    return Camera(R,-R@center,K,size,size).to(device)

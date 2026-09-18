@@ -59,22 +59,43 @@ def project_gaussians(means: Tensor, covariances: Tensor, R: Tensor,
     return uv, cov2, z
 
 
+# Target size of the [n,H,W] block evaluated per pass. The [n,H,W,2] pixel
+# offsets and the einsum workspace dwarf the alpha itself, so bound n, not N.
+FOOTPRINT_CHUNK_ELEMENTS = 4_000_000
+
+
 def gaussian_alpha(uv: Tensor, cov2: Tensor, opacities: Tensor,
-                   height: int, width: int) -> Tensor:
+                   height: int, width: int, chunk: int | None = None) -> Tensor:
     """Evaluate N elliptical footprints at all pixels -> [N,H,W] alpha.
 
     G = exp(-0.5 * delta^T @ inverse(cov2) @ delta); alpha = opacity * G.
     There is NO probability-density normalization factor. G peaks at one.
     Pixel centers use integer coordinates in this laboratory.
+
+    Gaussians never interact here, so at most `chunk` of them are evaluated per
+    pass (default: as many as keep the offsets near FOOTPRINT_CHUNK_ELEMENTS).
+    Each slice does the identical arithmetic on its own rows, so chunking moves
+    peak memory and nothing else. The returned [N,H,W] alpha is still built in
+    full because composite() needs every sorted layer; what shrinks is the far
+    larger scratch space around it.
     """
     ys, xs = torch.meshgrid(
         torch.arange(height, dtype=uv.dtype, device=uv.device),
         torch.arange(width, dtype=uv.dtype, device=uv.device), indexing="ij")
     pixels = torch.stack((xs, ys), dim=-1)  # [H,W,2]: coordinate order is x,y.
-    delta = pixels[None] - uv[:, None, None, :]
     inverse = torch.linalg.inv(cov2)  # Tiny 2x2 SPD matrices; explicit for teaching.
-    distance_squared = torch.einsum("nhwi,nij,nhwj->nhw", delta, inverse, delta)
-    return (opacities[:, None, None] * torch.exp(-0.5*distance_squared)).clamp(max=0.99)
+    if chunk is None:
+        chunk = max(1, FOOTPRINT_CHUNK_ELEMENTS // max(1, height*width))
+    parts = []
+    for start in range(0, len(uv), chunk):
+        stop = start + chunk
+        delta = pixels[None] - uv[start:stop, None, None, :]
+        distance_squared = torch.einsum("nhwi,nij,nhwj->nhw",
+                                        delta, inverse[start:stop], delta)
+        parts.append(opacities[start:stop, None, None] * torch.exp(-0.5*distance_squared))
+    if not parts:  # Everything was culled; composite() still expects [0,H,W].
+        return uv.new_zeros((0, height, width))
+    return torch.cat(parts).clamp(max=0.99)
 
 
 def composite(alpha: Tensor, colors: Tensor, background: Tensor):

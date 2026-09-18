@@ -1,4 +1,6 @@
 .venv/
+.venv-rocm/
+.venv-cuda/
 __pycache__/
 .pytest_cache/
 *.pyc

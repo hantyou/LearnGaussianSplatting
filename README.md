@@ -30,17 +30,28 @@ Connect both to [the mathematical walkthrough](docs/02-math.md).
    in the original implementation and gsplat after this lab.
 7. **[Navigate and inspect whole scenes](docs/07-viewer.md):** two real captures,
    a 755-Gaussian reconstruction experiment, and 3D shape inspection.
+8. **[CPU, AMD ROCm, and NVIDIA CUDA](docs/08-hardware.md):** one `--device` flag,
+   one environment per backend, and why AMD GPUs also answer to `--device cuda`.
+9. **[Agent handoff](docs/09-agent-handoff.md):** exact current state, verified
+   real-scene results, boundaries, dirty worktree, and next-machine checklist.
 
 ## Run it
 
-Python 3.10 or later. The Python experiments are CPU-only and need no external data.
-The browser viewer uses WebGL2; the real scenes are downloaded pretrained models. On this
-workspace a `.venv` has already been prepared; the tested commands are:
+Python 3.10 or later. The experiments need no external data and run on the CPU by
+default; a GPU is optional. The browser viewer uses WebGL2; the real scenes are
+downloaded pretrained models. On this workspace a CPU-only `.venv` has already
+been prepared; the tested commands are:
 
 ```powershell
 .\.venv\Scripts\python.exe -m splatlab.demo
 .\.venv\Scripts\python.exe -m pytest -q
 ```
+
+To run on a GPU instead, add `--device cuda` from an environment built with the
+matching wheels — see [the hardware guide](docs/08-hardware.md), which also
+explains why an AMD ROCm GPU is selected with `cuda` (a PyTorch API name) while
+the metrics still report its backend as `rocm`. `python -m splatlab.device`
+prints what the current machine supports.
 
 To exercise public real-scene splats through the CPU renderer at a manageable
 size, run:

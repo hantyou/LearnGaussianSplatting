@@ -23,13 +23,14 @@ class GaussianScene(nn.Module):
         return self.opacity_logits.sigmoid()
 
 
-def make_teacher() -> GaussianScene:
+def make_teacher(device=None) -> GaussianScene:
     """Nine overlapping, oriented ellipsoids at different depths.
 
     We generate images from a known scene so no downloads/calibration are needed.
     The optimization objective uses only rendered training images; initialization
     perturbs teacher parameters. This is a controlled optimization lab, not reconstruction
     from arbitrary photographs. Teacher geometry is never an optimization loss.
+    Built on the CPU and then moved, so every backend starts from the same bits.
     """
     means = torch.tensor([
         [-0.55, -0.40, 0.10], [0., -0.48, 0.24], [0.55, -0.32, 0.04],
@@ -44,17 +45,26 @@ def make_teacher() -> GaussianScene:
     angles = torch.linspace(-0.7, 0.8, len(means))
     quaternions = torch.stack((torch.cos(angles/2), torch.zeros_like(angles),
                                torch.zeros_like(angles), torch.sin(angles/2)), dim=1)
-    return GaussianScene(means, scales, quaternions, colors, torch.full((len(means),), 0.85))
+    scene = GaussianScene(means, scales, quaternions, colors, torch.full((len(means),), 0.85))
+    return scene.to(device) if device is not None else scene
 
 
-def make_student(teacher: GaussianScene, seed: int = 7) -> GaussianScene:
+def make_student(teacher: GaussianScene, seed: int = 7, device=None) -> GaussianScene:
+    """Perturb the teacher on the CPU, then move the result to `device`.
+
+    The seeded CPU generator is deliberate: CUDA and ROCm draw a different random
+    stream from the same seed, so drawing here keeps a GPU run comparable with the
+    CPU run instead of merely similar.
+    """
     generator = torch.Generator().manual_seed(seed)
     def noise(tensor, amount):
         return amount * torch.randn(tensor.shape, generator=generator)
     with torch.no_grad():
-        return GaussianScene(
-            teacher.means + noise(teacher.means, 0.13),
-            (teacher.log_scales + noise(teacher.log_scales, 0.25)).exp(),
-            teacher.quaternions + noise(teacher.quaternions, 0.18),
-            (teacher.color_logits + noise(teacher.color_logits, 0.9)).sigmoid(),
-            torch.full_like(teacher.opacities, 0.60))
+        cpu = {name: value.detach().cpu() for name, value in teacher.state_dict().items()}
+        student = GaussianScene(
+            cpu["means"] + noise(cpu["means"], 0.13),
+            (cpu["log_scales"] + noise(cpu["log_scales"], 0.25)).exp(),
+            cpu["quaternions"] + noise(cpu["quaternions"], 0.18),
+            (cpu["color_logits"] + noise(cpu["color_logits"], 0.9)).sigmoid(),
+            torch.full_like(cpu["opacity_logits"], 0.60))
+    return student.to(device) if device is not None else student

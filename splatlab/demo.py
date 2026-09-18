@@ -18,6 +18,7 @@ from PIL import Image, ImageDraw
 import torch
 
 from .camera import orbit_camera
+from .device import CHOICES, describe_device, format_report, select_device, synchronize
 from .scene import make_teacher, make_student
 from .render import render
 
@@ -55,11 +56,13 @@ def save_comparison(path, targets, before, after, train_count,
 @torch.no_grad()
 def save_orbit(path, teacher, student, core, size):
     frames = []
+    device = teacher.means.device
     # Include poses outside the training range to expose extrapolation limitations.
     for angle in np.linspace(-75, 75, 41):
-        camera = orbit_camera(float(angle), size)
-        left = render(teacher, camera)[0].numpy()
-        right = render(student, camera, core)[0].numpy()
+        camera = orbit_camera(float(angle), size, device)
+        # Pillow needs host memory; .cpu() is a no-op for a CPU run.
+        left = render(teacher, camera)[0].cpu().numpy()
+        right = render(student, camera, core)[0].cpu().numpy()
         pixels = (np.clip(np.concatenate((left, right), axis=1), 0, 1)*255).astype(np.uint8)
         content = Image.fromarray(pixels).resize((size*8, size*4), Image.Resampling.NEAREST)
         frame = Image.new("RGB", (size*8, size*4+28), (240, 240, 240))
@@ -75,6 +78,8 @@ def main():
     parser.add_argument("--size", type=int, default=256)
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--train-views", type=int, choices=(1, 5), default=5)
+    parser.add_argument("--device", default="auto", choices=CHOICES,
+                        help="auto uses a GPU when one is usable, else the CPU")
     parser.add_argument("--student", action="store_true", help="Use YOUR exercises/core.py")
     parser.add_argument("--output", type=Path, default=Path("outputs/reference"))
     args = parser.parse_args()
@@ -84,15 +89,19 @@ def main():
     if args.student:
         from exercises import core
 
+    device = select_device(args.device)
+    device_info = describe_device(device, args.device)
+    print(format_report(device_info), flush=True)
+
     # Small tensors are often slower with a large pool of CPU worker threads.
     torch.set_num_threads(4)
     torch.manual_seed(args.seed)
     args.output.mkdir(parents=True, exist_ok=True)
-    teacher = make_teacher().requires_grad_(False)
-    student = make_student(teacher, args.seed)
+    teacher = make_teacher(device).requires_grad_(False)
+    student = make_student(teacher, args.seed, device)
     train_angles = [-50., -25., 0., 25., 50.] if args.train_views == 5 else [0.]
     test_angles = [-37.5, 12.5, 37.5]  # Never contribute to the training loss.
-    cameras = [orbit_camera(angle, args.size) for angle in train_angles + test_angles]
+    cameras = [orbit_camera(angle, args.size, device) for angle in train_angles + test_angles]
     with torch.no_grad():
         targets = [render(teacher, camera)[0] for camera in cameras]
     before, _ = evaluate(student, cameras, targets, core)
@@ -108,6 +117,7 @@ def main():
         {"params": [student.color_logits, student.opacity_logits], "lr": 0.04},
     ])
     history = [{"step": 0, "train_mse": initial_train, "heldout_mse": initial_test}]
+    synchronize(device)  # GPU work is queued, so time it between two barriers.
     start = time.perf_counter()
     for step in range(1, args.steps+1):
         camera_index = (step-1) % n_train
@@ -123,12 +133,13 @@ def main():
             _, test_mse = evaluate(student, test_cameras, test_targets, core)
             history.append({"step": step, "train_mse": train_mse, "heldout_mse": test_mse})
             print(f"step {step:4d} | train {psnr(train_mse):5.2f} dB | unseen {psnr(test_mse):5.2f} dB", flush=True)
+    synchronize(device)
     seconds = time.perf_counter() - start
     after, _ = evaluate(student, cameras, targets, core)
     final = history[-1]
     report = {
         "description": "Synthetic Gaussian targets, perturbed teacher initialization; no geometry supervision",
-        "torch_version": torch.__version__, "device": "cpu", "seed": args.seed,
+        **device_info, "seed": args.seed,
         "steps": args.steps, "size": args.size, "gaussians": len(student.means),
         "student_core": args.student, "train_angles_degrees": train_angles,
         "heldout_angles_degrees": test_angles, "training_seconds": seconds,
@@ -137,8 +148,8 @@ def main():
         "history": history,
     }
     (args.output / "metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    np.savez(args.output / "learned_scene.npz",
-             **{key: value.detach().numpy() for key, value in student.state_dict().items()})
+    np.savez(args.output / "learned_scene.npz",  # NumPy checkpoints live on the host.
+             **{key: value.detach().cpu().numpy() for key, value in student.state_dict().items()})
     save_comparison(args.output / "comparison.png", targets, before, after, n_train)
     fig, ax = plt.subplots(figsize=(6, 3.5), constrained_layout=True)
     for key, label in (("train_mse", "Training views"), ("heldout_mse", "Unseen views")):

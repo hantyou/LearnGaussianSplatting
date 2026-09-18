@@ -226,7 +226,7 @@ def main():
     parser.add_argument("--download", action="store_true",
                         help="download missing public checkpoints and verify their size")
     parser.add_argument("--gaussians", type=int, default=2048)
-    parser.add_argument("--size", type=int, default=96)
+    parser.add_argument("--size", type=int, default=128)
     parser.add_argument("--steps", type=int, default=24)
     parser.add_argument("--learning-rate", type=float, default=0.003)
     parser.add_argument("--seed", type=int, default=23)

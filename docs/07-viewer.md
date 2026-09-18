@@ -111,6 +111,25 @@ The browser uses its viewport resolution and the efficient
 display behavior need not match the PyTorch rasterizer pixel for pixel. Compute
 quantitative metrics with the Python renderer, not screenshots of the viewer.
 
+## CPU smoke test on real splat data
+
+The readable renderer can also exercise a small subset of the public real-scene
+checkpoints. This is a renderer/gradient smoke test, not a reconstruction run:
+the compact `.splat` files contain trained Gaussian parameters but not the source
+photographs or calibrated training cameras.
+
+```powershell
+.\.venv\Scripts\python.exe -m splatlab.real_scene_smoke --download `
+  --gaussians 1024 --size 64 --steps 12
+```
+
+The command verifies/downloads `room.splat` and `train.splat`, renders three
+64×64 diagnostic views on CPU, perturbs the real parameters, and checks that
+12 Adam steps reduce the image error. Results are written under
+`outputs/real-smoke/<scene>/`, including `comparison.png` and `metrics.json`.
+The full checkpoints are about 1.6M and 1.0M Gaussians; the smoke test uses
+1,024 so the dense teaching renderer stays practical on CPU.
+
 After completing the exercises, use your own core in either experiment:
 
 ```powershell

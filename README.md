@@ -42,6 +42,20 @@ workspace a `.venv` has already been prepared; the tested commands are:
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
+To exercise public real-scene splats through the CPU renderer at a manageable
+size, run:
+
+```powershell
+.\.venv\Scripts\python.exe -m splatlab.real_scene_smoke --download `
+  --gaussians 1024 --size 64 --steps 12
+```
+
+This uses low-resolution diagnostic renders and a 1,024-Gaussian subset of the
+downloaded `room` and `train` checkpoints. It checks real-scene decoding,
+finite rendering, gradients, and short parameter optimization; it is not a
+full reconstruction benchmark because the compact checkpoints do not include
+the original images and camera calibration.
+
 For a fresh installation on Windows:
 
 ```powershell

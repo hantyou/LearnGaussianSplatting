@@ -1,0 +1,11 @@
+{
+  "name": "gaussian-splatting-learning-viewer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local scene and Gaussian ellipsoid inspector for the learning lab",
+  "dependencies": {
+    "@sparkjsdev/spark": "2.2.0",
+    "three": "0.180.0"
+  }
+}

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gaussian Splatting Lab · Scene explorer</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+  {"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/","@sparkjsdev/spark":"./node_modules/@sparkjsdev/spark/dist/spark.module.js"}}
+  </script>
+</head>
+<body>
+<header>
+  <div><span class="eyebrow">GAUSSIAN SPLATTING LAB</span><h1>Look inside the scene.</h1></div>
+  <label class="scene-field">Scene<select id="scene">
+    <option value="street">Miniature street · synthetic</option>
+    <option value="room">Room · real capture</option>
+    <option value="train">Train · real capture</option>
+    <option value="nine">Nine Gaussians · first lesson</option>
+  </select></label>
+</header>
+<main>
+  <section class="workspace" aria-label="Interactive 3D scene">
+    <div class="toolbar">
+      <div class="segmented" role="group" aria-label="Visualization mode">
+        <button type="button" data-mode="render" aria-pressed="true">Rendered scene</button>
+        <button type="button" data-mode="ellipsoids" aria-pressed="false">3D ellipsoids</button>
+        <button type="button" data-mode="points" aria-pressed="false">Centers</button>
+      </div>
+      <button type="button" id="reset">Reset view</button>
+    </div>
+    <div id="viewport"><div id="loading" role="status">Preparing the 3D viewer…</div></div>
+    <div class="caption"><span id="status" role="status">Loading…</span><span id="fps"></span></div>
+    <p id="scene-note" class="scene-note"></p>
+  </section>
+  <aside>
+    <section id="learning-controls">
+      <h2>Follow the reconstruction</h2>
+      <div class="segmented phases" role="group" aria-label="Training stage">
+        <button type="button" data-stage="before" aria-pressed="false">Before</button>
+        <button type="button" data-stage="after" aria-pressed="true">Learned</button>
+        <button type="button" data-stage="target" aria-pressed="false">Target</button>
+      </div>
+      <p id="learning-note" class="muted">Switch stages without moving the camera. Compare an unseen viewpoint.</p>
+    </section>
+    <section>
+      <h2>Move through the scene</h2>
+      <label>Navigation<select id="navigation" aria-label="Navigation"><option value="orbit">Orbit & pan</option><option value="fly">Fly through</option></select></label>
+      <p id="navigation-help" class="muted">Drag to orbit · right-drag to pan · scroll to zoom. Double-click a point on the scene to focus.</p>
+      <label>Movement speed <output id="speed-value">1.0×</output><input id="speed" type="range" min="0.1" max="3" step="0.1" value="1"></label>
+    </section>
+    <section id="diagnostics">
+      <h2>Expose the Gaussians</h2>
+      <label>Contour size<select id="sigma"><option value="1">1σ ellipsoids</option><option value="2">2σ ellipsoids</option><option value="3">3σ ellipsoids</option></select></label>
+      <label>Ellipsoid / center sample<select id="budget"><option value="500">Up to 500</option><option value="2500" selected>Up to 2,500</option><option value="10000">Up to 10,000</option></select></label>
+      <label class="check"><input id="local-only" type="checkbox"> Only near the orbit focus</label>
+      <label>Neighborhood radius <output id="radius-value">1.0</output><input id="radius" type="range" min="0.1" max="3" step="0.1" value="1"></label>
+      <p class="muted" id="sample-note">Solid ellipsoids visualize spatial shape. They are not the translucent rendered image.</p>
+    </section>
+    <section>
+      <h2>Inspect one Gaussian</h2>
+      <p id="selection-hint" class="muted">In 3D ellipsoid mode, click a ball to inspect its actual parameters.</p>
+      <div id="selection" hidden>
+        <dl><dt>Index</dt><dd id="sel-index"></dd><dt>Center (source scene units)</dt><dd id="sel-center"></dd><dt>Axis std. deviations</dt><dd id="sel-scales"></dd><dt>Quaternion (w, x, y, z)</dt><dd id="sel-quat"></dd><dt>Color (R, G, B)</dt><dd id="sel-color"></dd><dt>Opacity</dt><dd id="sel-opacity"></dd></dl>
+        <p class="muted" id="sel-frame"></p>
+        <button type="button" id="focus-selected">Focus selected Gaussian</button>
+        <label class="check"><input id="isolate" type="checkbox"> Isolate selected Gaussian</label>
+      </div>
+    </section>
+    <details><summary>What am I seeing?</summary>
+      <p>Rendered mode uses projected Gaussian footprints and transparency. The balls are constant-density contours of those same primitives: their semi-axis lengths are σ, 2σ, or 3σ. Gaussians continue beyond these contours.</p>
+      <p>Real scenes are pretrained examples. The miniature street is a controlled image-fitting experiment. Neither ellipsoid shape nor opacity is automatically a probability of physical occupancy.</p>
+      <p>Large scenes are sampled in diagnostic modes. Full rendering uses all loaded Gaussians. Scene units are not necessarily meters.</p>
+      <p>Renderer: <a href="https://github.com/sparkjsdev/spark" target="_blank" rel="noreferrer">Spark</a> + Three.js. Real samples: <a href="https://huggingface.co/cakewalk/splat-data" target="_blank" rel="noreferrer">cakewalk/splat-data</a>. See the local viewer guide for provenance and limitations.</p>
+    </details>
+  </aside>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

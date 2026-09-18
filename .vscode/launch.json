@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Runs the file you are editing as a module, e.g.
+            //   splatlab/fit_street.py -> python -m splatlab.fit_street
+            //   splatlab/demo.py       -> python -m splatlab.demo
+            // Required because splatlab/*.py uses relative imports (from .render import ...),
+            // which only resolve when the file is imported as part of its package.
+            // Assumes the file sits directly inside a top-level package folder.
+            "name": "Debug current file (as module)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "${relativeFileDirname}.${fileBasenameNoExtension}",
+            "args": "${command:pickArgs}",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            // Fallback for standalone scripts that are NOT part of a package,
+            // e.g. outputs/run-reviewers.py. Runs the file directly.
+            "name": "Debug current file (as script)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "args": "${command:pickArgs}",
+            "cwd": "${fileDirname}",
+            "env": { "PYTHONPATH": "${workspaceFolder}" },
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            // Fixed entry point kept for convenience (its arguments are easy to re-run).
+            "name": "Debug splatlab.demo",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "splatlab.demo",
+            "args": ["--steps", "300", "--size", "256"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "name": "room",
+    "source": "https://huggingface.co/cakewalk/splat-data/resolve/main/room.splat",
+    "bytes": 50988032,
+    "sha256": "b751ede3e3e58d0345de3b4a83abc948112301e72dd1e8a6543b3aef14a7c226",
+    "provenance": "Pretrained public sample distributed by cakewalk/splat-data; not trained by this lab",
+    "license_note": "Source repository says assets have differing licenses; no per-file license is declared there. Do not assume the viewer's MIT license covers the model."
+  },
+  {
+    "name": "train",
+    "source": "https://huggingface.co/cakewalk/splat-data/resolve/main/train.splat",
+    "bytes": 32848256,
+    "sha256": "d371f544e9e6a0a10b4a9d75c48d66f3c47f484559c33883c33c97ad7d2aa6af",
+    "provenance": "Pretrained public sample distributed by cakewalk/splat-data; not trained by this lab",
+    "license_note": "Source repository says assets have differing licenses; no per-file license is declared there. Do not assume the viewer's MIT license covers the model."
+  }
+]

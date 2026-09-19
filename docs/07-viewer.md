@@ -1,9 +1,11 @@
 # 7. Reconstruct a scene, move through it, inspect its primitives
 
-Start with **[the real Room scene](http://127.0.0.1:8765/?scene=room)** while the
-local server is running. Then use the Scene menu for **Train** and **Miniature
-street**. The single-Gaussian projection exercise is a stepping stone; this lab
-lets you investigate a complete scene, occlusion, generalization, and geometry.
+Start with **[the classic Garden reconstruction](http://127.0.0.1:8765/?scene=garden)**
+while the local server is running: the round wooden table, central vase, stone patio,
+and vegetation make it easy to recognize a successful reconstruction. Then use the
+Scene menu for **Room**, **Train**, and **Miniature street**. The single-Gaussian
+projection exercise is a stepping stone; this lab lets you investigate a complete
+scene, occlusion, generalization, and geometry.
 
 ## What is actually included
 
@@ -11,6 +13,7 @@ lets you investigate a complete scene, occlusion, generalization, and geometry.
 |---|---|---|
 | Room | Real capture, 1,593,376 Gaussians | No; downloaded pretrained model |
 | Train | Real capture, 1,026,508 Gaussians | No; downloaded pretrained model |
+| Garden | Mip-NeRF 360 garden, 5,834,784 Gaussians | No; downloaded pretrained model |
 | Miniature street | Road, two cars, building, trees; 755 Gaussians | Yes; complete CPU image-fitting experiment |
 | Nine Gaussians | Small, easily traced mathematical exercise | Yes; complete CPU image-fitting experiment |
 

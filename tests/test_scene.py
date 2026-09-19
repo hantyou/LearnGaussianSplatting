@@ -22,6 +22,17 @@ def test_behind_camera_is_culled_without_nan(core):
     torch.testing.assert_close(image, image.new_tensor([0.035, 0.045, 0.065]).expand(12, 12, 3))
 
 
+def test_tiled_render_is_close_and_backpropagates():
+    """Tiles approximate only tiny tails beyond three standard deviations."""
+    camera = orbit_camera(21, size=24)
+    scene = make_teacher()
+    dense, _ = render(scene, camera)
+    tiled, _ = render(scene, camera, tile_size=8)
+    torch.testing.assert_close(tiled, dense, atol=2e-3, rtol=2e-3)
+    tiled.square().mean().backward()
+    assert scene.means.grad is not None and torch.isfinite(scene.means.grad).all()
+
+
 def test_training_improves_an_unseen_view(core):
     torch.set_num_threads(2)
     teacher = make_teacher().requires_grad_(False)

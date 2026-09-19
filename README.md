@@ -32,7 +32,9 @@ Connect both to [the mathematical walkthrough](docs/02-math.md).
    a 755-Gaussian reconstruction experiment, and 3D shape inspection.
 8. **[CPU, AMD ROCm, and NVIDIA CUDA](docs/08-hardware.md):** one `--device` flag,
    one environment per backend, and why AMD GPUs also answer to `--device cuda`.
-9. **[Agent handoff](docs/09-agent-handoff.md):** exact current state, verified
+9. **[Photos to a reconstruction](docs/10-photos-to-splats.md):** run local
+   COLMAP on photographs, then optimize this project's Gaussian parameters.
+10. **[Agent handoff](docs/09-agent-handoff.md):** exact current state, verified
    real-scene results, boundaries, dirty worktree, and next-machine checklist.
 
 ## Run it
@@ -66,6 +68,12 @@ downloaded `room` and `train` checkpoints. It checks real-scene decoding,
 finite rendering, gradients, and short parameter optimization; it is not a
 full reconstruction benchmark because the compact checkpoints do not include
 the original images and camera calibration.
+
+To run an actual photographs → local SfM → learned Gaussian scene pipeline,
+follow [Photos to a reconstruction](docs/10-photos-to-splats.md).  It uses the
+real Garden photographs as a repeatable input, but initializes from a COLMAP
+model produced on this computer and optimizes through `splatlab.render`, not a
+pretrained splat checkpoint.
 
 For a fresh installation on Windows:
 

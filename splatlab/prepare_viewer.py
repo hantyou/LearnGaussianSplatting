@@ -15,7 +15,7 @@ from .street import make_street
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "viewer" / "data"
-SAMPLES = {"room": 50988032, "train": 32848256}
+SAMPLES = {"room": 50988032, "train": 32848256, "garden": 186713088}
 
 
 def download(name, expected_bytes):

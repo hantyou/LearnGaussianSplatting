@@ -31,7 +31,9 @@ const config={
   room:{kind:'real',position:[0,0,0],target:[0,0,-2],scale:.5,
     note:'Real capture · pretrained Room sample from cakewalk/splat-data. This lab renders the downloaded reconstruction; it did not train it. The compact .splat file stores constant RGB, without view-dependent spherical harmonics.'},
   train:{kind:'real',position:[-3.01,.11,3.75],target:[-.15,.45,-1.5],scale:1.5,
-    note:'Real capture · pretrained Train sample from cakewalk/splat-data. Explore the locomotive and surrounding scene. Sparse views and unobserved areas can leave floaters and holes; the model is not a watertight mesh.'}
+    note:'Real capture · pretrained Train sample from cakewalk/splat-data. Explore the locomotive and surrounding scene. Sparse views and unobserved areas can leave floaters and holes; the model is not a watertight mesh.'},
+  garden:{kind:'real',position:[-4,2.5,10],target:[0,1.4,1.5],scale:6,
+    note:'Mip-NeRF 360 Garden · the classic round wooden table, vase, stone patio, and surrounding vegetation. This is a pretrained 5.8-million-Gaussian reconstruction rendered in full by the GPU viewer; it was not trained by this lab.'}
 };
 let currentMesh=null,currentScene='street',stage='after',mode='render',busy=false;
 let total=0,shown=0,sceneVersion=0;

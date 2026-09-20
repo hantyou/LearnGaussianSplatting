@@ -37,7 +37,7 @@ def covariance_3d(log_scales: Tensor, quaternions: Tensor) -> Tensor:
 
 
 def project_gaussians(means: Tensor, covariances: Tensor, R: Tensor,
-                      t: Tensor, K: Tensor, pixel_variance: float = 0.3):
+                      t: Tensor, K: Tensor, pixel_variance: float = 0.1):
     """World -> camera -> pixels. Inputs must already be in front of camera.
 
     R [3,3], t [3] are WORLD-TO-CAMERA: x_camera = R @ x_world + t.

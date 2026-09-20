@@ -92,8 +92,9 @@ We sample pixels at integer (u,v) coordinates, so a centered principal point is
 For \(\mu_c=(x,y,z)^T\), z>0:
 \[
 \pi(x,y,z)=
-\begin{bmatrix}f_x x/z+c_x\\f_y y/z+c_y\end{bmatrix}=m.
+\begin{bmatrix}f_x x/z+c_x\\f_y y/z+c_y\end{bmatrix}=m,
 \]
+where \(m\) is the projected pixel coordinate of \(x,y,z\).
 
 Division by z makes perspective nonlinear. A projected 3D Gaussian is therefore
 **not exactly Gaussian**. Linearize the camera near the center:
@@ -155,6 +156,7 @@ The quadratic form is squared Mahalanobis distance. One standard deviation from
 the center gives G=exp(-1/2), along any principal axis. The peak is G=1 regardless
 of ellipse area. Do **not** include \(1/(2\pi\sqrt{\det\Sigma_{2D}})\).
 These are opacity footprints, not normalized probability densities.
+<!-- TODO: Why this formation of the occupancy formation is adapted? And actually why opacity need to be varying. -->
 
 **Code:** `gaussian_alpha`. Tensor shapes expand from [N,2] to [N,H,W,2]; the
 quadratic form reduces the final vector dimensions, leaving [N,H,W].

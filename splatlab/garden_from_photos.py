@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import torch
+from tqdm import tqdm
 
 from .camera import Camera
 from .device import CHOICES, describe_device, format_report, select_device, synchronize
@@ -236,11 +237,11 @@ def main():
     parser.add_argument("--image-dir", type=Path, default=DATA/"images_8",
                         help="directory of JPGs named exactly as in the COLMAP model")
     parser.add_argument("--device", choices=CHOICES, default="cuda")
-    parser.add_argument("--gaussians", type=int, default=1000)
+    parser.add_argument("--gaussians", type=int, default=8000)
     parser.add_argument("--width", type=int, default=96)
     parser.add_argument("--tile-size", type=int, default=None,
                         help="screen tile width/height; enables memory-bounded rendering")
-    parser.add_argument("--steps", type=int, default=400)
+    parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--train-views", type=int, default=18)
     parser.add_argument("--holdout-views", type=int, default=3)
     parser.add_argument("--colmap-model", type=Path, default=DATA/"sparse"/"0",
@@ -265,7 +266,7 @@ def main():
                                   {"params": [scene.color_logits, scene.opacity_logits], "lr": .03}]))
     synchronize(device); started = time.perf_counter(); history = []
     print(f"Training {args.gaussians:,} Gaussians from {len(train)} real photographs at {args.width}px", flush=True)
-    for step in range(1, args.steps+1):
+    for step in tqdm(range(1, args.steps+1)):
         _, camera, target = train[(step-1) % len(train)]
         optimizer.zero_grad(set_to_none=True)
         prediction, _ = render(scene, camera, tile_size=args.tile_size)
@@ -278,6 +279,12 @@ def main():
         if step == 1 or step % 25 == 0 or step == args.steps:
             history.append({"step": step, "current_view_mse": float(loss.item())})
             print(f"step {step:4d}/{args.steps}: current view PSNR {psnr(loss):.2f} dB", flush=True)
+            if step > 0:
+                _, interm_holdout = score(scene, train, args.tile_size), score(scene, heldout, args.tile_size)
+                preview(args.output/"interm_comparison.png", scene, heldout, args.tile_size)
+                np.savez(args.output/"interm_learned_scene.npz", **{key: value.detach().cpu().numpy() for key, value in scene.state_dict().items()})
+                export_scene(scene, args.output/"interm_learned_scene.json", f"Garden reconstructed from photographs, intermediate step {step:4d} of total {args.steps}", y_up=False)
+
     synchronize(device); seconds = time.perf_counter()-started
     final_train, final_holdout = score(scene, train, args.tile_size), score(scene, heldout, args.tile_size)
     preview(args.output/"comparison.png", scene, heldout, args.tile_size)

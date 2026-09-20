@@ -20,6 +20,9 @@ def covariance_3d(log_scales, quaternions):
     # 2. Convert log standard deviations into VARIANCES.
     # 3. Return Q @ diagonal(variances) @ Q.T.
     # Hints: torch.diag_embed; transpose(-1,-2) preserves the batch axis.
+    Q = quaternion_to_matrix(quaternions=quaternions)
+    variances = torch.exp(2 * log_scales)  # (e^(log_scale))^2 = (e^(2*log_scale))
+    return Q @ torch.diag_embed(variances) @ Q.transpose(-1,-2)
     raise NotImplementedError("Exercise 1: construct a positive definite covariance")
 
 
